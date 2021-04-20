@@ -7,7 +7,7 @@ from datetime import datetime
 Base = declarative_base()
 
 
-def init():
+def init_db():
     print("init ")
     global engine
     engine = create_engine('sqlite:///task_list.db', echo = True)
@@ -26,8 +26,9 @@ def insert_to_task(member_id,guild_id,date, message, status):
     session.commit()
 
 
-def get_task_for_username(member_id, date=datetime.today()):
-    result_list = session.query(Task).filter(Task.member_id == member_id).all()
+def get_task_for_member_id(member_id, date=datetime.today()):
+    result_list = session.query(Task).filter(Task.member_id == member_id)\
+        .filter(Task.task_ending_date == func.Date(date)).all()
     return result_list
 
 
@@ -49,6 +50,13 @@ def delete_task_from_db(member_id, task_message, date):
     return task
 
 
+def update_task_by_id(task_id):
+    task = session.query(Task) \
+        .filter(Task.id == task_id).one()
+    task.status = not task.status
+    session.commit()
+    return task
+
 class Task(Base):
     __tablename__ = "task_list"
     id = Column("id", Integer, primary_key=True)
@@ -58,3 +66,4 @@ class Task(Base):
     task_ending_date = Column("date_end",Date)
     task_text = Column("task_text", String)
     status = Column("status", Boolean)
+    private = Column("private", Boolean)

@@ -23,7 +23,10 @@ emojiMap = {
         'downvote': '<:downvote:820677972645642290>',
         'expand': '<:expand:822466806211543080>',
         'collapse': '<:collapse:822467028983873606>',
-        'accept': '<:accept_todo:822495794602442814>'
+        'accept': '<:accept_todo:822495794602442814>',
+        'bullet_not_done':'🔳',
+        'bullet_done':'✅',
+        'not_done_emoji': '❎'
     }
 Mapemoji = {
         '1️⃣': 1,

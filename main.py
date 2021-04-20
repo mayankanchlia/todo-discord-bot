@@ -1,4 +1,5 @@
 # bot.py
+import asyncio
 import os
 
 import discord
@@ -6,64 +7,76 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from collections import defaultdict
 from model import *
-from utils import constants
+from utils import constants, emoji
 import message_embing
+from utils.constants import *
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 intents = discord.Intents().all()
-# client = discord.Client(prefix='', intents=intents)
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix=TRIGGER_WORD, intents=intents)
 taskList = defaultdict(list)
-init()
+init_db()
+
 
 @bot.event
 async def on_ready():
     print("All systems online and working " + bot.user.name)
 
+
 @bot.command()
-async def td(ctx,*, message: str):
-    arg1 = message.split(" ")[0]
-    if arg1.lower() == "add":
-        task_text = message.split(" ",1)[1]
+async def td(ctx, *, message: str):
+    await ctx.message.delete()
+    try:
+        arg1, data = message.split(" ", 1)
+    except:
+        arg1 = message
+    if arg1.lower() == COMMAND_ADD.lower():
         if ctx.guild is not None:
-            add_task_to_user_list(ctx.guild.id, ctx.author.id, datetime.today(),task_text)
-        else :
-            add_task_to_user_list(ctx.author.id, ctx.author.id, datetime.today(), task_text)
-    if arg1.lower() == "view":
-        await view(ctx)
-    if arg1.lower() == "emb":
-        await message_embing.send_ember(ctx)
+            add_task_to_user_list(ctx.guild.id, ctx.author.id, datetime.today(), data)
+        else:
+            add_task_to_user_list(ctx.author.id, ctx.author.id, datetime.today(), data)
+    if arg1.lower() == COMMAND_VIEW.lower():
+        message = await message_embing.send_ember(ctx, get_task_for_member_id(ctx.author.id))
+
+        def check(reaction, user):
+            return user == ctx.author
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await message.clear_reactions()
+        else:
+            await ctx.send('👍')
 
 
-def add_task_to_user_list(guild, member, date, taskDiscription):
-    insert_to_task(member, guild,date, taskDiscription, False)
+def add_task_to_user_list(guild, member, date, task_description):
+    insert_to_task(member, guild, date, task_description, False)
+
 
 async def view(ctx):
-    memberId = ctx.author.id
-    task_lists = get_task_for_username(memberId)
+    member_id = ctx.author.id
+    task_lists = get_task_for_member_id(member_id, datetime.today())
     for task in task_lists:
         print(task)
         message = await ctx.send(task.task_text)
-        if(task.status):
-            await message.add_reaction(constants.done_emoji)
+        if task.status:
+            await message.add_reaction(emoji.emojiMap.get('bullet_done'))
         else:
-            await message.add_reaction(constants.not_done_emoji)
+            await message.add_reaction(emoji.emojiMap.get('not_done_emoji'))
 
 
 @bot.event
-async def on_raw_reaction_add(payload):
-    if bot.user.id == payload.user_id:
-        print("this is bot react")
+async def on_reaction_add(reaction, user):
+    if user.id == bot.user.id:
         return
-    emoji = payload.emoji
-    if str(emoji) == constants.done_emoji:
-        channel = await bot.fetch_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        if message.content.startswith("!td"):
-            txt = message.content.split(" ",2)[-1]
-            task_row = get_task_by_username_and_text_update(message.author.id, txt, datetime.today(),True)
-        # print(message.content)
-    # print(emoji)
+    if reaction.emoji in emoji.Mapemoji:
+        task_number = emoji.Mapemoji.get(reaction.emoji)
+        task_list = get_task_for_member_id(user.id)
+        task = update_task_by_id(task_list[task_number-1].id)
+        await reaction.message.edit(embed=message_embing.get_edited_embed(get_task_for_member_id(user.id)))
+        await reaction.remove(user)
+
+
 bot.run(TOKEN, bot=True)
 
