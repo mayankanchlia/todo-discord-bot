@@ -50,12 +50,25 @@ def delete_task_from_db(member_id, task_message, date):
     return task
 
 
+def delete_task_by_id_from_db(task_id):
+    result = session.query(Task) \
+        .filter(Task.id == task_id).delete()
+    return result
+
+
+def delete_all_task_by_member_id(member_id, date):
+    result = session.query(Task) \
+        .filter(Task.member_id == member_id)\
+        .filter(Task.task_ending_date == date).delete()
+
+
 def update_task_by_id(task_id):
     task = session.query(Task) \
         .filter(Task.id == task_id).one()
     task.status = not task.status
     session.commit()
     return task
+
 
 class Task(Base):
     __tablename__ = "task_list"
