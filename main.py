@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from message_embing import send_help_embed
 from model import *
-from utils import constants, emoji
+from utils import constants, emoji, functionUtils
 import message_embing
 from utils.constants import *
 
@@ -57,16 +57,23 @@ async def td(ctx, *, message: str):
                 await delete_message(message, 30)
                 break
     elif arg1.lower() in COMMAND_DELETE:
+        message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1, True)
+        page_no = message_embing.get_page_no_from_embed(message.embeds[0])
         try :
-            task_no = int(data)
-            await delete_task_by_list_number(ctx,task_no,datetime.today())
+            def check(m):
+                return functionUtils.is_valid_task_no(m.content,
+                                                      page_no,
+                                                      message_embing.get_task_size_from_embed(message.embeds[0]))
+            while True:
+                try:
+                    msg = await bot.wait_for("message", check=check)
+                    await delete_task_by_list_number(ctx, int(msg.content) + (page_no - 1) * 5, datetime.today(),
+                                                     page_no)
+                except asyncio.TimeoutError:
+                    await delete_message(message,20)
         except :
             print(traceback.format_exc())
-            if data == "all":
-                delete_all_task_by_member_id(ctx.author.id, datetime.today())
-                await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id),0)
-            else:
-                await send_message(ctx,"Please enter correct task no")
+
     elif arg1.lower() == COMMAND_help:
         print(help)
         await ctx.send(embed=message_embing.send_help_embed(ctx))
@@ -87,10 +94,11 @@ def add_task_to_user_list(guild, member, date, task_description):
     insert_to_task(member, guild, date, task_description, False)
 
 
-async def delete_task_by_list_number(ctx, task_no,date):
+async def delete_task_by_list_number(ctx, task_no,date, page_no):
+    print(task_no)
     task_list = get_task_for_member_id(ctx.author.id, date)
     delete_task_by_id_from_db(task_list[task_no -1].id)
-    message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id),0)
+    message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id),page_no,True)
 
 
 
@@ -105,11 +113,7 @@ async def on_reaction_add(reaction, user):
         page_no = 0
         message = reaction.message
         if name == user.name :
-            for field in embeds[0].to_dict().get('fields'):
-                print(field)
-                if field['name'] == "Page":
-                    page_no = int(field['value'].split('/')[0])
-                    break
+            page_no = message_embing.get_page_no_from_embed(embeds[0])
             if reaction.emoji in emoji.mapemoji.keys():
                 task_number = emoji.mapemoji.get(reaction.emoji) + ((page_no-1)*10)
                 task_list = get_task_for_member_id(user.id)
@@ -117,13 +121,15 @@ async def on_reaction_add(reaction, user):
                 await message_embing.get_edited_embed(reaction,user, get_task_for_member_id(user.id), False, page_no)
             elif reaction.emoji == emoji.emojiMap.get('next'):
                 print("next page")
-                await message_embing.get_edited_embed(reaction,user, get_task_for_member_id(user.id), True, page_no+1)
+                await message_embing.get_edited_embed(reaction,user, get_task_for_member_id(user.id), True, page_no+1,
+                                                      message_embing.is_delete_field(reaction.message.embeds[0]))
             elif reaction.emoji == emoji.emojiMap.get('previous'):
                 print('previous page')
                 await message_embing.get_edited_embed(reaction, user, get_task_for_member_id(user.id), True,
                                                       page_no -1 )
         await reaction.remove(user)
         await delete_message(message, 30)
+
 
 
 bot.run(TOKEN, bot=True)
