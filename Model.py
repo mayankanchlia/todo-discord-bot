@@ -65,6 +65,7 @@ def delete_all_task_by_member_id(member_id, date):
 
 
 def update_task_by_id(task_id):
+    print("update task id" , task_id)
     task = session.query(Task) \
         .filter(Task.id == task_id).one()
     task.status = not task.status
