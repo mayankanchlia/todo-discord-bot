@@ -26,9 +26,11 @@ emojiMap = {
         'accept': '<:accept_todo:822495794602442814>',
         'bullet_not_done':'🔳',
         'bullet_done':'✅',
-        'not_done_emoji': '❎'
+        'not_done_emoji': '❎',
+        'next' : '▶',
+        'previous' : '◀'
     }
-Mapemoji = {
+mapemoji = {
         '1️⃣': 1,
         '2️⃣': 2,
         '3️⃣': 3,
