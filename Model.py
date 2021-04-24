@@ -47,12 +47,14 @@ def delete_task_from_db(member_id, task_message, date):
         .filter(Task.task_ending_date == func.Date(date)) \
         .filter(Task.member_id == member_id) \
         .filter(Task.task_text == task_message).delete()
+    session.commit()
     return task
 
 
 def delete_task_by_id_from_db(task_id):
     result = session.query(Task) \
         .filter(Task.id == task_id).delete()
+    session.commit()
     return result
 
 
