@@ -8,10 +8,10 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from collections import defaultdict
 
-from message_embing import send_help_embed
+from message_embeding import send_help_embed
 from model import *
 from utils import constants, emoji, functionUtils
-import message_embing
+import message_embeding
 from utils.constants import *
 
 load_dotenv()
@@ -42,9 +42,9 @@ async def td(ctx, *, message: str):
             add_task_to_user_list(ctx.guild.id, ctx.author.id, datetime.today(), data)
         else:
             add_task_to_user_list(ctx.author.id, ctx.author.id, datetime.today(), data)
-        await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
+        await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
     elif arg1.lower() == COMMAND_VIEW.lower():
-        message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
+        message = await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
 
         def check(reaction, user):
             print("check here")
@@ -57,13 +57,13 @@ async def td(ctx, *, message: str):
                 await delete_message(message, 30)
                 break
     elif arg1.lower() in COMMAND_DELETE:
-        message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1, True)
-        page_no = message_embing.get_page_no_from_embed(message.embeds[0])
+        message = await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1, True)
+        page_no = message_embeding.get_page_no_from_embed(message.embeds[0])
         try :
             def check(m):
                 return functionUtils.is_valid_task_no(m.content,
                                                       page_no,
-                                                      message_embing.get_task_size_from_embed(message.embeds[0]))
+                                                      message_embeding.get_task_size_from_embed(message.embeds[0]))
             while True:
                 try:
                     msg = await bot.wait_for("message", check=check)
@@ -76,7 +76,7 @@ async def td(ctx, *, message: str):
 
     elif arg1.lower() == COMMAND_help:
         print(help)
-        await ctx.send(embed=message_embing.send_help_embed(ctx))
+        await ctx.send(embed=message_embeding.send_help_embed(ctx))
     else:
         await ctx.send("Invalid command, type help command ")
 
@@ -98,7 +98,7 @@ async def delete_task_by_list_number(ctx, task_no,date, page_no):
     print(task_no)
     task_list = get_task_for_member_id(ctx.author.id, date)
     delete_task_by_id_from_db(task_list[task_no -1].id)
-    message = await message_embing.send_embed(ctx, get_task_for_member_id(ctx.author.id),page_no,True)
+    message = await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), page_no, True)
 
 
 
@@ -113,20 +113,20 @@ async def on_reaction_add(reaction, user):
         page_no = 0
         message = reaction.message
         if name == user.name :
-            page_no = message_embing.get_page_no_from_embed(embeds[0])
+            page_no = message_embeding.get_page_no_from_embed(embeds[0])
             if reaction.emoji in emoji.mapemoji.keys():
                 task_number = emoji.mapemoji.get(reaction.emoji) + ((page_no-1)*10)
                 task_list = get_task_for_member_id(user.id)
                 task = update_task_by_id(task_list[task_number-1].id)
-                await message_embing.get_edited_embed(reaction,user, get_task_for_member_id(user.id), False, page_no)
+                await message_embeding.get_edited_embed(reaction, user, get_task_for_member_id(user.id), False, page_no)
             elif reaction.emoji == emoji.emojiMap.get('next'):
                 print("next page")
-                await message_embing.get_edited_embed(reaction,user, get_task_for_member_id(user.id), True, page_no+1,
-                                                      message_embing.is_delete_field(reaction.message.embeds[0]))
+                await message_embeding.get_edited_embed(reaction, user, get_task_for_member_id(user.id), True, page_no + 1,
+                                                        message_embeding.is_delete_field(reaction.message.embeds[0]))
             elif reaction.emoji == emoji.emojiMap.get('previous'):
                 print('previous page')
-                await message_embing.get_edited_embed(reaction, user, get_task_for_member_id(user.id), True,
-                                                      page_no -1 )
+                await message_embeding.get_edited_embed(reaction, user, get_task_for_member_id(user.id), True,
+                                                        page_no - 1)
         await reaction.remove(user)
         await delete_message(message, 30)
 

@@ -11,7 +11,7 @@ async def send_embed(ctx, tasks, page_no, isDeletCommand = False):
     if len(tasks) == 0:
         embed.add_field(name="\u200b", value="You do not have any open tasks.\n Please add using add command", inline=False)
     start = (page_no-1)*5
-    end = min(len(tasks), (page_no)*5)
+    end = min(len(tasks), (page_no) *5)
     for i in range(start,end):
         bullet =  emojiMap.get('bullet_done') if tasks[i].status else emojiMap.get('bullet_not_done')
         embed.add_field(name="\u200b", value=bullet + " " + tasks[i].task_text + "\n", inline=False)
