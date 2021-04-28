@@ -44,7 +44,7 @@ async def td(ctx, *, message: str):
             add_task_to_user_list(ctx.author.id, ctx.author.id, datetime.today(), data)
         await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
     elif arg1.lower() == COMMAND_VIEW.lower():
-        message = await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id), 1)
+        message = await message_embeding.send_embed(ctx, get_task_for_member_id(ctx.author.id,datetime.today()), 1)
 
         def check(reaction, user):
             print("check here")
